@@ -22,7 +22,7 @@ This is just a sample Python FastAPI application which allows me to practice my 
    ```
 
 4. Run FastAPI (optionally with auto-reload):
-   ```
+   ```bash
    uvicorn app:app --reload
    ```
 

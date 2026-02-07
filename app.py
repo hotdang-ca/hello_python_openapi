@@ -3,17 +3,89 @@ from typing import List, Optional
 from uuid import uuid4
 
 from models.item import Item, ItemCreate
+from models.user import User, UserCreate
 
 app = FastAPI(
   title="Sample FastAPI /w OpenAPI",
   description="A sample API demonstrating classes, models, and automatic Swagger gen",
-  version="1.0.0"
+  version="1.0.0",
+  root_path="/api"
 )
 
 # in-memory store
 ITEMS = []
+USERS = []
 
-@app.get("/items", response_model=List[Item])
+@app.get("/users", response_model=List[User], tags=["Users"])
+def list_users():
+  """
+  Get all users
+  """
+
+  return USERS
+
+@app.get("/users/{user_id}", response_model=User, tags=["Users"])
+def get_user(user_id: str):
+  """
+  Get user by ID
+  
+  :param user_id: User ID of user to search
+  :type user_id: str
+  """
+  for user in USERS:
+    if user["id"] == user_id:
+      return user
+  
+  raise HTTPException(status_code=404, detail="User not found")
+
+@app.post("/users", response_model=User, status_code=201, tags=["Users"], description="Creates a new user")
+def create_user(user: UserCreate):
+  """
+  Create a new user
+  
+  :param user: Description
+  :type user: UserCreate
+  """
+  new_user = user.dict()
+  new_user["id"] = str(uuid4())
+  USERS.append(new_user)
+  return new_user
+
+@app.put("/users/{user_id}", response_model=User, tags=["Users"])
+def update_user(user_id: str, new_user: UserCreate):
+  """
+  Updates an existing user, by ID
+  
+  :param user_id: User ID to update
+  :type user_id: str
+  :param user: New User fields
+  :type user: UserCreate
+  """
+  for u, user in enumerate(USERS):
+    if user["id"] == user_id:
+      updated_user = new_user.dict()
+      updated_user["id"] = user_id
+      USERS[u] = updated_user
+      return updated_user
+  
+  raise HTTPException(status_code=404, detail="User not found")
+
+@app.delete("/users/{user_id}", status_code=201, tags=["Users"])
+def delete_user(user_id: str):
+  """
+  Deletes a user
+  
+  :param user_id: UserID belonging to user to delete
+  :type user_id: str
+  """
+  for u, user in enumerate(USERS):
+    if user["id"] == user_id:
+      USERS.pop(u)
+      return {"message": f"User {user_id} deleted successfully"}
+  
+  raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+
+@app.get("/items", response_model=List[Item], tags=["Items"])
 def list_items(min_price: Optional[float] = Query(None, description="Min price filter")):
   """
   Get all items.
@@ -25,7 +97,7 @@ def list_items(min_price: Optional[float] = Query(None, description="Min price f
 
   return [item for item in ITEMS if item["price"] >= min_price]
 
-@app.get("/items/{item_id}", response_model=Item)
+@app.get("/items/{item_id}", response_model=Item, tags=["Items"])
 def get_item(item_id: str):
   """
   Get item by ID
@@ -38,7 +110,7 @@ def get_item(item_id: str):
   
   raise HTTPException(status_code=404, detail="Item not found")
 
-@app.post("/items", response_model=Item, status_code=201)
+@app.post("/items", response_model=Item, status_code=201, tags=["Items"])
 def create_item(item: ItemCreate):
   """
   Create a new item.
@@ -50,7 +122,7 @@ def create_item(item: ItemCreate):
   ITEMS.append(new_item)
   return new_item
 
-@app.put("/items/{item_id}", response_model=Item, status_code=200)
+@app.put("/items/{item_id}", response_model=Item, status_code=200, tags=["Items"])
 def update_item(new_item: ItemCreate, item_id: str):
   """
   Updates an Item with specified ID
@@ -69,7 +141,7 @@ def update_item(new_item: ItemCreate, item_id: str):
   
   raise HTTPException(status_code=404, detail="Item not found")
 
-@app.delete("/items/{item_id}", status_code=201) # 204 if i were absolutely smart about it
+@app.delete("/items/{item_id}", status_code=201, tags=["Items"]) # 204 if i were absolutely smart about it
 def delete_item(item_id: str):
   """
   Deletes an item.

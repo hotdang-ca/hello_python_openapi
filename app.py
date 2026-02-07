@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Query
 from typing import List, Optional
-from models import Item, ItemCreate
+from uuid import uuid4
+
+from models.item import Item, ItemCreate
 
 app = FastAPI(
   title="Sample FastAPI /w OpenAPI",
